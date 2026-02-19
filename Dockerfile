@@ -211,9 +211,12 @@ COPY backend/migrations ./migrations
 # Copy UI files
 COPY --from=backend-build /app/ui/build ./ui/build
 
-# Copy .env file (with fallback to .env.production.example)
+# Copy .env files
 COPY backend/.env* /app/
-RUN if [ ! -f /app/.env ]; then \
+# For production images, prefer .env.production if it exists, otherwise fallback to .env.production.example
+RUN if [ -f /app/.env.production ]; then \
+  cp /app/.env.production /app/.env; \
+  elif [ ! -f /app/.env ]; then \
   if [ -f /app/.env.production.example ]; then \
   cp /app/.env.production.example /app/.env; \
   fi; \
