@@ -34,11 +34,12 @@ brew install wget openssl readline zlib cmake
 
 # ========== PostgreSQL Installation ==========
 echo "========================================"
-echo "Building PostgreSQL client tools (versions 12-18)..."
+echo "Building PostgreSQL client tools (versions 11-18)..."
 echo "========================================"
 
 # PostgreSQL source URLs
 declare -A PG_URLS=(
+    ["11"]="https://ftp.postgresql.org/pub/source/v11.22/postgresql-11.22.tar.gz"
     ["12"]="https://ftp.postgresql.org/pub/source/v12.20/postgresql-12.20.tar.gz"
     ["13"]="https://ftp.postgresql.org/pub/source/v13.16/postgresql-13.16.tar.gz"
     ["14"]="https://ftp.postgresql.org/pub/source/v14.13/postgresql-14.13.tar.gz"
@@ -116,7 +117,7 @@ build_postgresql_client() {
 }
 
 # Build each PostgreSQL version
-pg_versions="12 13 14 15 16 17 18"
+pg_versions="11 12 13 14 15 16 17 18"
 
 for version in $pg_versions; do
     url=${PG_URLS[$version]}

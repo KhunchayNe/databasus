@@ -15,6 +15,7 @@ const (
 type PostgresqlVersion string
 
 const (
+	PostgresqlVersion11 PostgresqlVersion = "11"
 	PostgresqlVersion12 PostgresqlVersion = "12"
 	PostgresqlVersion13 PostgresqlVersion = "13"
 	PostgresqlVersion14 PostgresqlVersion = "14"
@@ -33,6 +34,8 @@ const (
 
 func GetPostgresqlVersionEnum(version string) PostgresqlVersion {
 	switch version {
+	case "11":
+		return PostgresqlVersion11
 	case "12":
 		return PostgresqlVersion12
 	case "13":

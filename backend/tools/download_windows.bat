@@ -35,6 +35,7 @@ echo.
 set "BASE_URL=https://get.enterprisedb.com/postgresql"
 
 :: Define PostgreSQL versions and their corresponding download URLs
+set "PG11_URL=%BASE_URL%/postgresql-11.22-1-windows-x64.exe"
 set "PG12_URL=%BASE_URL%/postgresql-12.20-1-windows-x64.exe"
 set "PG13_URL=%BASE_URL%/postgresql-13.16-1-windows-x64.exe"
 set "PG14_URL=%BASE_URL%/postgresql-14.13-1-windows-x64.exe"
@@ -44,7 +45,7 @@ set "PG17_URL=%BASE_URL%/postgresql-17.0-1-windows-x64.exe"
 set "PG18_URL=%BASE_URL%/postgresql-18.0-1-windows-x64.exe"
 
 :: PostgreSQL versions
-set "pg_versions=12 13 14 15 16 17 18"
+set "pg_versions=11 12 13 14 15 16 17 18"
 
 :: Download and install each PostgreSQL version
 for %%v in (%pg_versions%) do (

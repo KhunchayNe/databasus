@@ -1,4 +1,5 @@
 export enum PostgresqlVersion {
+  PostgresqlVersion11 = '11',
   PostgresqlVersion12 = '12',
   PostgresqlVersion13 = '13',
   PostgresqlVersion14 = '14',

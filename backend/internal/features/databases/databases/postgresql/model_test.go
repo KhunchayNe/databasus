@@ -91,6 +91,7 @@ func Test_TestConnection_InsufficientPermissions_ReturnsError(t *testing.T) {
 		version string
 		port    string
 	}{
+		{"PostgreSQL 11", "11", env.TestPostgres11Port},
 		{"PostgreSQL 12", "12", env.TestPostgres12Port},
 		{"PostgreSQL 13", "13", env.TestPostgres13Port},
 		{"PostgreSQL 14", "14", env.TestPostgres14Port},
@@ -166,6 +167,7 @@ func Test_TestConnection_SufficientPermissions_Success(t *testing.T) {
 		version string
 		port    string
 	}{
+		{"PostgreSQL 11", "11", env.TestPostgres11Port},
 		{"PostgreSQL 12", "12", env.TestPostgres12Port},
 		{"PostgreSQL 13", "13", env.TestPostgres13Port},
 		{"PostgreSQL 14", "14", env.TestPostgres14Port},
@@ -250,6 +252,7 @@ func Test_IsUserReadOnly_AdminUser_ReturnsFalse(t *testing.T) {
 		version string
 		port    string
 	}{
+		{"PostgreSQL 11", "11", env.TestPostgres11Port},
 		{"PostgreSQL 12", "12", env.TestPostgres12Port},
 		{"PostgreSQL 13", "13", env.TestPostgres13Port},
 		{"PostgreSQL 14", "14", env.TestPostgres14Port},
@@ -330,6 +333,7 @@ func Test_CreateReadOnlyUser_UserCanReadButNotWrite(t *testing.T) {
 		version string
 		port    string
 	}{
+		{"PostgreSQL 11", "11", env.TestPostgres11Port},
 		{"PostgreSQL 12", "12", env.TestPostgres12Port},
 		{"PostgreSQL 13", "13", env.TestPostgres13Port},
 		{"PostgreSQL 14", "14", env.TestPostgres14Port},
@@ -765,7 +769,9 @@ func createPostgresModel(container *PostgresContainer) *PostgresqlDatabase {
 }
 
 func extractPostgresVersion(versionStr string) tools.PostgresqlVersion {
-	if strings.Contains(versionStr, "PostgreSQL 12") {
+	if strings.Contains(versionStr, "PostgreSQL 11") {
+		return tools.GetPostgresqlVersionEnum("11")
+	} else if strings.Contains(versionStr, "PostgreSQL 12") {
 		return tools.GetPostgresqlVersionEnum("12")
 	} else if strings.Contains(versionStr, "PostgreSQL 13") {
 		return tools.GetPostgresqlVersionEnum("13")

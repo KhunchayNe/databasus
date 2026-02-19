@@ -37,6 +37,7 @@ type EnvVariables struct {
 	TestGoogleDriveClientSecret string `env:"TEST_GOOGLE_DRIVE_CLIENT_SECRET"`
 	TestGoogleDriveTokenJSON    string `env:"TEST_GOOGLE_DRIVE_TOKEN_JSON"`
 
+	TestPostgres11Port string `env:"TEST_POSTGRES_11_PORT"`
 	TestPostgres12Port string `env:"TEST_POSTGRES_12_PORT"`
 	TestPostgres13Port string `env:"TEST_POSTGRES_13_PORT"`
 	TestPostgres14Port string `env:"TEST_POSTGRES_14_PORT"`
@@ -196,6 +197,10 @@ func loadEnvVariables() {
 	env.SecretKeyPath = filepath.Join(filepath.Dir(backendRoot), "databasus-data", "secret.key")
 
 	if env.IsTesting {
+		if env.TestPostgres11Port == "" {
+			log.Error("TEST_POSTGRES_11_PORT is empty")
+			os.Exit(1)
+		}
 		if env.TestPostgres12Port == "" {
 			log.Error("TEST_POSTGRES_12_PORT is empty")
 			os.Exit(1)

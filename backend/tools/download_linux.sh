@@ -55,7 +55,7 @@ echo "Updating package list..."
 $SUDO apt-get update -qq -y
 
 # Install PostgreSQL client tools for each version
-pg_versions="12 13 14 15 16 17 18"
+pg_versions="11 12 13 14 15 16 17 18"
 
 for version in $pg_versions; do
     echo "Installing PostgreSQL $version client tools..."

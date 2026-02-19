@@ -698,7 +698,7 @@ func detectDatabaseVersion(ctx context.Context, conn *pgx.Conn) (tools.Postgresq
 
 	// Map to known PostgresqlVersion enum values
 	switch majorVersion {
-	case "12", "13", "14", "15", "16", "17", "18":
+	case "11", "12", "13", "14", "15", "16", "17", "18":
 		return tools.PostgresqlVersion(majorVersion), nil
 	default:
 		return "", fmt.Errorf("unsupported PostgreSQL version: %s", majorVersion)

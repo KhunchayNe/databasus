@@ -83,10 +83,10 @@ RUN apt-get install -y --no-install-recommends \
   wget ca-certificates gnupg lsb-release sudo gosu curl unzip xz-utils libncurses5 libncurses6
 RUN rm -rf /var/lib/apt/lists/*
 
-# ========= Install PostgreSQL client binaries (versions 12-18) =========
+# ========= Install PostgreSQL client binaries (versions 11-18) =========
 # Pre-downloaded binaries from assets/tools/ - no network download needed
 ARG TARGETARCH
-RUN mkdir -p /usr/lib/postgresql/12/bin /usr/lib/postgresql/13/bin \
+RUN mkdir -p /usr/lib/postgresql/11/bin /usr/lib/postgresql/12/bin /usr/lib/postgresql/13/bin \
   /usr/lib/postgresql/14/bin /usr/lib/postgresql/15/bin \
   /usr/lib/postgresql/16/bin /usr/lib/postgresql/17/bin \
   /usr/lib/postgresql/18/bin
@@ -95,6 +95,7 @@ RUN mkdir -p /usr/lib/postgresql/12/bin /usr/lib/postgresql/13/bin \
 COPY assets/tools/x64/postgresql/ /tmp/pg-x64/
 COPY assets/tools/arm/postgresql/ /tmp/pg-arm/
 RUN if [ "$TARGETARCH" = "amd64" ]; then \
+  cp -r /tmp/pg-x64/postgresql-11/bin/* /usr/lib/postgresql/11/bin/ && \
   cp -r /tmp/pg-x64/postgresql-12/bin/* /usr/lib/postgresql/12/bin/ && \
   cp -r /tmp/pg-x64/postgresql-13/bin/* /usr/lib/postgresql/13/bin/ && \
   cp -r /tmp/pg-x64/postgresql-14/bin/* /usr/lib/postgresql/14/bin/ && \
@@ -103,6 +104,7 @@ RUN if [ "$TARGETARCH" = "amd64" ]; then \
   cp -r /tmp/pg-x64/postgresql-17/bin/* /usr/lib/postgresql/17/bin/ && \
   cp -r /tmp/pg-x64/postgresql-18/bin/* /usr/lib/postgresql/18/bin/; \
   elif [ "$TARGETARCH" = "arm64" ]; then \
+  cp -r /tmp/pg-arm/postgresql-11/bin/* /usr/lib/postgresql/11/bin/ && \
   cp -r /tmp/pg-arm/postgresql-12/bin/* /usr/lib/postgresql/12/bin/ && \
   cp -r /tmp/pg-arm/postgresql-13/bin/* /usr/lib/postgresql/13/bin/ && \
   cp -r /tmp/pg-arm/postgresql-14/bin/* /usr/lib/postgresql/14/bin/ && \
