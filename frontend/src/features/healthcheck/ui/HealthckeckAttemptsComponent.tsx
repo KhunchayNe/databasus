@@ -78,7 +78,7 @@ export const HealthckeckAttemptsComponent = ({ database }: Props) => {
   };
 
   useEffect(() => {
-    let interval: number | null = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     let isCancelled = false;
 
     setIsHealthcheckConfigLoading(true);

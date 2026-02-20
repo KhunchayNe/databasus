@@ -38,7 +38,6 @@ export const EditMariaDbSpecificDataComponent = ({
 }: Props) => {
   const { message } = App.useApp();
 
-  const [editingDatabase, setEditingDatabase] = useState<Database>();
   const [isSaving, setIsSaving] = useState(false);
 
   const [isConnectionTested, setIsConnectionTested] = useState(false);
@@ -47,6 +46,25 @@ export const EditMariaDbSpecificDataComponent = ({
 
   const hasAdvancedValues = !!database.mariadb?.isExcludeEvents;
   const [isShowAdvanced, setShowAdvanced] = useState(hasAdvancedValues);
+
+  // Derive editingDatabase from props during render (not in useEffect)
+  // This ensures immediate updates when the database prop changes
+  const [internalState, setInternalState] = useState<Database>({
+    ...database,
+    mariadb: database.mariadb ? { ...database.mariadb } : undefined,
+  });
+
+  // Update internal state when database prop changes
+  const [prevDatabase, setPrevDatabase] = useState<Database>(database);
+  if (database !== prevDatabase) {
+    setPrevDatabase(database);
+    setInternalState({
+      ...database,
+      mariadb: database.mariadb ? { ...database.mariadb } : undefined,
+    });
+  }
+
+  const editingDatabase = internalState;
 
   const parseFromClipboard = async () => {
     try {
@@ -80,7 +98,7 @@ export const EditMariaDbSpecificDataComponent = ({
         },
       };
 
-      setEditingDatabase(updatedDatabase);
+      setInternalState(updatedDatabase);
       setIsConnectionTested(false);
       message.success('Connection string parsed successfully');
     } catch {
@@ -147,11 +165,7 @@ export const EditMariaDbSpecificDataComponent = ({
     setIsConnectionTested(false);
     setIsTestingConnection(false);
     setIsConnectionFailed(false);
-
-    setEditingDatabase({ ...database });
   }, [database]);
-
-  if (!editingDatabase) return null;
 
   let isAllFieldsFilled = true;
   if (!editingDatabase.mariadb?.host) isAllFieldsFilled = false;
@@ -184,7 +198,7 @@ export const EditMariaDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mariadb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mariadb: {
                 ...editingDatabase.mariadb,
@@ -225,7 +239,7 @@ export const EditMariaDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mariadb || e === null) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mariadb: { ...editingDatabase.mariadb, port: e },
             });
@@ -244,7 +258,7 @@ export const EditMariaDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mariadb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mariadb: { ...editingDatabase.mariadb, username: e.target.value.trim() },
             });
@@ -263,7 +277,7 @@ export const EditMariaDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mariadb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mariadb: { ...editingDatabase.mariadb, password: e.target.value },
             });
@@ -287,7 +301,7 @@ export const EditMariaDbSpecificDataComponent = ({
             onChange={(e) => {
               if (!editingDatabase.mariadb) return;
 
-              setEditingDatabase({
+              setInternalState({
                 ...editingDatabase,
                 mariadb: { ...editingDatabase.mariadb, database: e.target.value.trim() },
               });
@@ -307,7 +321,7 @@ export const EditMariaDbSpecificDataComponent = ({
           onChange={(checked) => {
             if (!editingDatabase.mariadb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mariadb: { ...editingDatabase.mariadb, isHttps: checked },
             });
@@ -341,7 +355,7 @@ export const EditMariaDbSpecificDataComponent = ({
               onChange={(e) => {
                 if (!editingDatabase.mariadb) return;
 
-                setEditingDatabase({
+                setInternalState({
                   ...editingDatabase,
                   mariadb: {
                     ...editingDatabase.mariadb,

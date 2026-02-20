@@ -38,7 +38,6 @@ export const EditMongoDbSpecificDataComponent = ({
 }: Props) => {
   const { message } = App.useApp();
 
-  const [editingDatabase, setEditingDatabase] = useState<Database>();
   const [isSaving, setIsSaving] = useState(false);
 
   const [isConnectionTested, setIsConnectionTested] = useState(false);
@@ -47,6 +46,25 @@ export const EditMongoDbSpecificDataComponent = ({
 
   const hasAdvancedValues = !!database.mongodb?.authDatabase;
   const [isShowAdvanced, setShowAdvanced] = useState(hasAdvancedValues);
+
+  // Derive editingDatabase from props during render (not in useEffect)
+  // This ensures immediate updates when the database prop changes
+  const [internalState, setInternalState] = useState<Database>({
+    ...database,
+    mongodb: database.mongodb ? { ...database.mongodb } : undefined,
+  });
+
+  // Update internal state when database prop changes
+  const [prevDatabase, setPrevDatabase] = useState<Database>(database);
+  if (database !== prevDatabase) {
+    setPrevDatabase(database);
+    setInternalState({
+      ...database,
+      mongodb: database.mongodb ? { ...database.mongodb } : undefined,
+    });
+  }
+
+  const editingDatabase = internalState;
 
   const parseFromClipboard = async () => {
     try {
@@ -82,7 +100,7 @@ export const EditMongoDbSpecificDataComponent = ({
         },
       };
 
-      setEditingDatabase(updatedDatabase);
+      setInternalState(updatedDatabase);
       setIsConnectionTested(false);
       message.success('Connection string parsed successfully');
     } catch {
@@ -149,11 +167,7 @@ export const EditMongoDbSpecificDataComponent = ({
     setIsConnectionTested(false);
     setIsTestingConnection(false);
     setIsConnectionFailed(false);
-
-    setEditingDatabase({ ...database });
   }, [database]);
-
-  if (!editingDatabase) return null;
 
   let isAllFieldsFilled = true;
   if (!editingDatabase.mongodb?.host) isAllFieldsFilled = false;
@@ -186,7 +200,7 @@ export const EditMongoDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mongodb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mongodb: {
                 ...editingDatabase.mongodb,
@@ -227,7 +241,7 @@ export const EditMongoDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mongodb || e === null) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mongodb: { ...editingDatabase.mongodb, port: e },
             });
@@ -246,7 +260,7 @@ export const EditMongoDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mongodb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mongodb: { ...editingDatabase.mongodb, username: e.target.value.trim() },
             });
@@ -265,7 +279,7 @@ export const EditMongoDbSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mongodb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mongodb: { ...editingDatabase.mongodb, password: e.target.value },
             });
@@ -289,7 +303,7 @@ export const EditMongoDbSpecificDataComponent = ({
             onChange={(e) => {
               if (!editingDatabase.mongodb) return;
 
-              setEditingDatabase({
+              setInternalState({
                 ...editingDatabase,
                 mongodb: { ...editingDatabase.mongodb, database: e.target.value.trim() },
               });
@@ -309,7 +323,7 @@ export const EditMongoDbSpecificDataComponent = ({
           onChange={(checked) => {
             if (!editingDatabase.mongodb) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mongodb: { ...editingDatabase.mongodb, isHttps: checked },
             });
@@ -329,7 +343,7 @@ export const EditMongoDbSpecificDataComponent = ({
             onChange={(value) => {
               if (!editingDatabase.mongodb) return;
 
-              setEditingDatabase({
+              setInternalState({
                 ...editingDatabase,
                 mongodb: { ...editingDatabase.mongodb, cpuCount: value || 1 },
               });
@@ -372,7 +386,7 @@ export const EditMongoDbSpecificDataComponent = ({
               onChange={(e) => {
                 if (!editingDatabase.mongodb) return;
 
-                setEditingDatabase({
+                setInternalState({
                   ...editingDatabase,
                   mongodb: { ...editingDatabase.mongodb, authDatabase: e.target.value.trim() },
                 });

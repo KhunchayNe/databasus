@@ -40,7 +40,6 @@ export const EditPostgreSqlSpecificDataComponent = ({
 }: Props) => {
   const { message } = App.useApp();
 
-  const [editingDatabase, setEditingDatabase] = useState<Database>();
   const [isSaving, setIsSaving] = useState(false);
 
   const [isConnectionTested, setIsConnectionTested] = useState(false);
@@ -52,6 +51,25 @@ export const EditPostgreSqlSpecificDataComponent = ({
   const [isShowAdvanced, setShowAdvanced] = useState(hasAdvancedValues);
 
   const [hasAutoAddedPublicSchema, setHasAutoAddedPublicSchema] = useState(false);
+
+  // Derive editingDatabase from props during render (not in useEffect)
+  // This ensures immediate updates when the database prop changes
+  const [internalState, setInternalState] = useState<Database>({
+    ...database,
+    postgresql: database.postgresql ? { ...database.postgresql } : undefined,
+  });
+
+  // Update internal state when database prop changes
+  const [prevDatabase, setPrevDatabase] = useState<Database>(database);
+  if (database !== prevDatabase) {
+    setPrevDatabase(database);
+    setInternalState({
+      ...database,
+      postgresql: database.postgresql ? { ...database.postgresql } : undefined,
+    });
+  }
+
+  const editingDatabase = internalState;
 
   const parseFromClipboard = async () => {
     try {
@@ -86,7 +104,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
         },
       };
 
-      setEditingDatabase(autoAddPublicSchemaForSupabase(updatedDatabase));
+      setInternalState(autoAddPublicSchemaForSupabase(updatedDatabase));
       setIsConnectionTested(false);
       message.success('Connection string parsed successfully');
     } catch {
@@ -178,11 +196,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
     setIsConnectionTested(false);
     setIsTestingConnection(false);
     setIsConnectionFailed(false);
-
-    setEditingDatabase({ ...database });
   }, [database]);
-
-  if (!editingDatabase) return null;
 
   let isAllFieldsFilled = true;
   if (!editingDatabase.postgresql?.host) isAllFieldsFilled = false;
@@ -226,7 +240,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
                 host: e.target.value.trim().replace('https://', '').replace('http://', ''),
               },
             };
-            setEditingDatabase(autoAddPublicSchemaForSupabase(updatedDatabase));
+            setInternalState(autoAddPublicSchemaForSupabase(updatedDatabase));
             setIsConnectionTested(false);
           }}
           size="small"
@@ -279,7 +293,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.postgresql || e === null) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               postgresql: { ...editingDatabase.postgresql, port: e },
             });
@@ -302,7 +316,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
               ...editingDatabase,
               postgresql: { ...editingDatabase.postgresql, username: e.target.value.trim() },
             };
-            setEditingDatabase(autoAddPublicSchemaForSupabase(updatedDatabase));
+            setInternalState(autoAddPublicSchemaForSupabase(updatedDatabase));
             setIsConnectionTested(false);
           }}
           size="small"
@@ -318,7 +332,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.postgresql) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               postgresql: { ...editingDatabase.postgresql, password: e.target.value },
             });
@@ -342,7 +356,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
             onChange={(e) => {
               if (!editingDatabase.postgresql) return;
 
-              setEditingDatabase({
+              setInternalState({
                 ...editingDatabase,
                 postgresql: { ...editingDatabase.postgresql, database: e.target.value.trim() },
               });
@@ -362,7 +376,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
           onChange={(checked) => {
             if (!editingDatabase.postgresql) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               postgresql: { ...editingDatabase.postgresql, isHttps: checked },
             });
@@ -383,7 +397,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
               onChange={(value) => {
                 if (!editingDatabase.postgresql) return;
 
-                setEditingDatabase({
+                setInternalState({
                   ...editingDatabase,
                   postgresql: { ...editingDatabase.postgresql, cpuCount: value || 1 },
                 });
@@ -429,7 +443,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
                 onChange={(values) => {
                   if (!editingDatabase.postgresql) return;
 
-                  setEditingDatabase({
+                  setInternalState({
                     ...editingDatabase,
                     postgresql: { ...editingDatabase.postgresql, includeSchemas: values },
                   });
@@ -451,7 +465,7 @@ export const EditPostgreSqlSpecificDataComponent = ({
                   onChange={(e) => {
                     if (!editingDatabase.postgresql) return;
 
-                    setEditingDatabase({
+                    setInternalState({
                       ...editingDatabase,
                       postgresql: {
                         ...editingDatabase.postgresql,

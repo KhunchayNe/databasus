@@ -23,6 +23,7 @@ import (
 	healthcheck_config "databasus-backend/internal/features/healthcheck/config"
 	"databasus-backend/internal/features/notifiers"
 	"databasus-backend/internal/features/restores"
+	"databasus-backend/internal/features/restore_targets"
 	"databasus-backend/internal/features/storages"
 	system_healthcheck "databasus-backend/internal/features/system/healthcheck"
 	users_controllers "databasus-backend/internal/features/users/controllers"
@@ -202,6 +203,7 @@ func setUpRoutes(r *gin.Engine) {
 	databases.GetDatabaseController().RegisterRoutes(protected)
 	backups.GetBackupController().RegisterRoutes(protected)
 	restores.GetRestoreController().RegisterRoutes(protected)
+	restore_targets.GetRestoreTargetController().RegisterRoutes(protected)
 	healthcheck_config.GetHealthcheckConfigController().RegisterRoutes(protected)
 	healthcheck_attempt.GetHealthcheckAttemptController().RegisterRoutes(protected)
 	backups_config.GetBackupConfigController().RegisterRoutes(protected)
@@ -219,6 +221,7 @@ func setUpDependencies() {
 	notifiers.SetupDependencies()
 	storages.SetupDependencies()
 	backups_config.SetupDependencies()
+	restore_targets.SetupDependencies()
 }
 
 func runBackgroundTasks(log *slog.Logger) {

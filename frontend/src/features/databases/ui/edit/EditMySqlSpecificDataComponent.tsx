@@ -38,12 +38,30 @@ export const EditMySqlSpecificDataComponent = ({
 }: Props) => {
   const { message } = App.useApp();
 
-  const [editingDatabase, setEditingDatabase] = useState<Database>();
   const [isSaving, setIsSaving] = useState(false);
 
   const [isConnectionTested, setIsConnectionTested] = useState(false);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [isConnectionFailed, setIsConnectionFailed] = useState(false);
+
+  // Derive editingDatabase from props during render (not in useEffect)
+  // This ensures immediate updates when the database prop changes
+  const [internalState, setInternalState] = useState<Database>({
+    ...database,
+    mysql: database.mysql ? { ...database.mysql } : undefined,
+  });
+
+  // Update internal state when database prop changes
+  const [prevDatabase, setPrevDatabase] = useState<Database>(database);
+  if (database !== prevDatabase) {
+    setPrevDatabase(database);
+    setInternalState({
+      ...database,
+      mysql: database.mysql ? { ...database.mysql } : undefined,
+    });
+  }
+
+  const editingDatabase = internalState;
 
   const parseFromClipboard = async () => {
     try {
@@ -77,7 +95,7 @@ export const EditMySqlSpecificDataComponent = ({
         },
       };
 
-      setEditingDatabase(updatedDatabase);
+      setInternalState(updatedDatabase);
       setIsConnectionTested(false);
       message.success('Connection string parsed successfully');
     } catch {
@@ -144,11 +162,7 @@ export const EditMySqlSpecificDataComponent = ({
     setIsConnectionTested(false);
     setIsTestingConnection(false);
     setIsConnectionFailed(false);
-
-    setEditingDatabase({ ...database });
   }, [database]);
-
-  if (!editingDatabase) return null;
 
   let isAllFieldsFilled = true;
   if (!editingDatabase.mysql?.host) isAllFieldsFilled = false;
@@ -181,7 +195,7 @@ export const EditMySqlSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mysql) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mysql: {
                 ...editingDatabase.mysql,
@@ -222,7 +236,7 @@ export const EditMySqlSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mysql || e === null) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mysql: { ...editingDatabase.mysql, port: e },
             });
@@ -241,7 +255,7 @@ export const EditMySqlSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mysql) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mysql: { ...editingDatabase.mysql, username: e.target.value.trim() },
             });
@@ -260,7 +274,7 @@ export const EditMySqlSpecificDataComponent = ({
           onChange={(e) => {
             if (!editingDatabase.mysql) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mysql: { ...editingDatabase.mysql, password: e.target.value },
             });
@@ -284,7 +298,7 @@ export const EditMySqlSpecificDataComponent = ({
             onChange={(e) => {
               if (!editingDatabase.mysql) return;
 
-              setEditingDatabase({
+              setInternalState({
                 ...editingDatabase,
                 mysql: { ...editingDatabase.mysql, database: e.target.value.trim() },
               });
@@ -304,7 +318,7 @@ export const EditMySqlSpecificDataComponent = ({
           onChange={(checked) => {
             if (!editingDatabase.mysql) return;
 
-            setEditingDatabase({
+            setInternalState({
               ...editingDatabase,
               mysql: { ...editingDatabase.mysql, isHttps: checked },
             });

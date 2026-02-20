@@ -1,6 +1,6 @@
-import { CopyOutlined, ExclamationCircleOutlined, SyncOutlined } from '@ant-design/icons';
+import { CopyOutlined, ExclamationCircleOutlined, SyncOutlined, SaveOutlined, DeleteOutlined, HistoryOutlined } from '@ant-design/icons';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { App, Button, Modal, Spin, Tooltip } from 'antd';
+import { App, Button, Modal, Spin, Tooltip, Select, Input, Popconfirm } from 'antd';
 import dayjs from 'dayjs';
 import { useEffect, useRef, useState } from 'react';
 
@@ -9,6 +9,7 @@ import { type Database, DatabaseType } from '../../../entity/databases';
 import { type Restore, RestoreStatus, restoreApi } from '../../../entity/restores';
 import { getUserTimeFormat } from '../../../shared/time';
 import { EditDatabaseSpecificDataComponent } from '../../databases/ui/edit/EditDatabaseSpecificDataComponent';
+import { restoreTargetStorage, type StoredRestoreTarget } from '../utils/restoreTargetStorage';
 
 interface Props {
   database: Database;
@@ -70,6 +71,12 @@ export const RestoresComponent = ({ database, backup }: Props) => {
 
   const [isShowRestore, setIsShowRestore] = useState(false);
 
+  const [savedTargets, setSavedTargets] = useState<StoredRestoreTarget[]>([]);
+  const [selectedTargetId, setSelectedTargetId] = useState<string | undefined>();
+  const [showSaveTargetModal, setShowSaveTargetModal] = useState(false);
+  const [newTargetName, setNewTargetName] = useState('');
+  const [isSavingTarget, setIsSavingTarget] = useState(false);
+
   const isReloadInProgress = useRef(false);
 
   const loadRestores = async () => {
@@ -103,13 +110,77 @@ export const RestoresComponent = ({ database, backup }: Props) => {
     }
   };
 
+  const loadSavedTargets = async () => {
+    try {
+      console.log('[RestoresComponent] Loading saved targets from API...');
+      const targets = await restoreTargetStorage.getTargets();
+      console.log('[RestoresComponent] Loaded targets:', targets);
+      console.log('[RestoresComponent] Number of targets:', targets.length);
+      setSavedTargets(targets);
+    } catch (error) {
+      console.error('[RestoresComponent] Error loading targets:', error);
+      message.error('Failed to load restore targets');
+    }
+  };
+
+  const handleSaveTarget = async () => {
+    if (!newTargetName.trim()) {
+      message.error('Please enter a name for this restore target');
+      return;
+    }
+
+    console.log('[RestoresComponent] Saving restore target:', newTargetName);
+    console.log('[RestoresComponent] Current editingDatabase:', editingDatabase);
+
+    try {
+      setIsSavingTarget(true);
+      await restoreTargetStorage.saveTarget(newTargetName, editingDatabase, database.type);
+      message.success('Restore target saved successfully');
+      setNewTargetName('');
+      setShowSaveTargetModal(false);
+      await loadSavedTargets();
+    } catch (error) {
+      console.error('[RestoresComponent] Error saving target:', error);
+      message.error('Failed to save restore target');
+    } finally {
+      setIsSavingTarget(false);
+    }
+  };
+
+  const handleLoadTarget = (targetId: string) => {
+    const target = savedTargets.find((t) => t.id === targetId);
+    if (target) {
+      // Load the database with all credentials intact (user saved them intentionally)
+      setEditingDatabase({ ...target.database });
+      message.success(`Loaded restore target: ${target.name}`);
+    }
+  };
+
+  const handleDeleteTarget = async (targetId: string) => {
+    try {
+      await restoreTargetStorage.deleteTarget(targetId);
+      message.success('Restore target deleted');
+      await loadSavedTargets();
+      if (selectedTargetId === targetId) {
+        setSelectedTargetId(undefined);
+      }
+    } catch (error) {
+      console.error('[RestoresComponent] Error deleting target:', error);
+      message.error('Failed to delete restore target');
+    }
+  };
+
   useEffect(() => {
     setIsLoading(true);
     loadRestores().finally(() => setIsLoading(false));
+    loadSavedTargets();
 
     const interval = setInterval(() => {
       loadRestores();
     }, 1_000);
+
+    // Note: Cross-tab sync not needed since we use API now
+    // Each tab will fetch from API independently
 
     return () => clearInterval(interval);
   }, [backup.id]);
@@ -131,6 +202,62 @@ export const RestoresComponent = ({ database, backup }: Props) => {
           data to the same DB where the backup was made)
         </div>
 
+        {savedTargets.length > 0 && (
+          <div className="mb-4 rounded border border-gray-300 bg-gray-50 p-4 dark:border-gray-600 dark:bg-gray-800">
+            <div className="mb-2 flex items-center text-sm font-semibold">
+              <HistoryOutlined className="mr-2" />
+              Saved Restore Targets ({savedTargets.length})
+            </div>
+            <Select
+              placeholder="Select a saved restore target..."
+              className="w-full"
+              value={selectedTargetId}
+              onChange={(value) => {
+                setSelectedTargetId(value);
+                if (value) {
+                  handleLoadTarget(value);
+                }
+              }}
+              allowClear
+              onClear={() => {
+                setEditingDatabase(createInitialEditingDatabase(database));
+              }}
+            >
+              {savedTargets.map((target) => (
+                <Select.Option key={target.id} value={target.id}>
+                  <div className="flex items-center justify-between">
+                    <span>{target.name}</span>
+                    <Popconfirm
+                      title="Delete this restore target?"
+                      onConfirm={(e) => {
+                        e?.stopPropagation();
+                        handleDeleteTarget(target.id);
+                      }}
+                      okText="Yes"
+                      cancelText="No"
+                    >
+                      <DeleteOutlined
+                        className="ml-2 text-red-500 hover:text-red-700"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </Popconfirm>
+                  </div>
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
+        )}
+
+        <div className="mb-4">
+          <Button
+            icon={<SaveOutlined />}
+            onClick={() => setShowSaveTargetModal(true)}
+            disabled={!editingDatabase.postgresql && !editingDatabase.mysql && !editingDatabase.mariadb && !editingDatabase.mongodb}
+          >
+            Save Current as Restore Target
+          </Button>
+        </div>
+
         <EditDatabaseSpecificDataComponent
           database={editingDatabase}
           onCancel={() => setIsShowRestore(false)}
@@ -144,6 +271,33 @@ export const RestoresComponent = ({ database, backup }: Props) => {
           }}
           isRestoreMode={true}
         />
+
+        <Modal
+          title="Save Restore Target"
+          open={showSaveTargetModal}
+          onOk={handleSaveTarget}
+          confirmLoading={isSavingTarget}
+          onCancel={() => {
+            setShowSaveTargetModal(false);
+            setNewTargetName('');
+          }}
+          okText="Save"
+        >
+          <div className="my-4">
+            <Input
+              placeholder="Enter a name for this restore target (e.g., 'Production PostgreSQL 11')"
+              value={newTargetName}
+              onChange={(e) => setNewTargetName(e.target.value)}
+              onPressEnter={handleSaveTarget}
+              maxLength={100}
+              disabled={isSavingTarget}
+            />
+            <div className="mt-2 text-xs text-gray-500">
+              This will save the current database connection settings for quick access later.
+              Database credentials will be saved securely to the server.
+            </div>
+          </div>
+        </Modal>
       </>
     );
   }

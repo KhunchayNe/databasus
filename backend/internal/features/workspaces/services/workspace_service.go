@@ -1,6 +1,7 @@
 package workspaces_services
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -313,4 +314,23 @@ func (s *WorkspaceService) GetWorkspaceByID(
 	workspaceID uuid.UUID,
 ) (*workspaces_models.Workspace, error) {
 	return s.workspaceRepository.GetWorkspaceByID(workspaceID)
+}
+
+func (s *WorkspaceService) GetUsersCurrentWorkspace(
+	ctx context.Context,
+	user *users_models.User,
+) (*workspaces_models.Workspace, error) {
+	// Get user's workspaces and return the first one
+	workspacesDTO, err := s.GetUserWorkspaces(user)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(workspacesDTO.Workspaces) == 0 {
+		return nil, fmt.Errorf("user does not have any workspaces")
+	}
+
+	// Get the first workspace ID and fetch the full model
+	firstWorkspaceID := workspacesDTO.Workspaces[0].ID
+	return s.GetWorkspaceByID(firstWorkspaceID)
 }
